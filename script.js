@@ -84,7 +84,6 @@ function addQuote() {
   populateCategories();
   alert("Quote added!");
 
-  // Clear form
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
 }
@@ -120,10 +119,69 @@ function importFromJsonFile(event) {
   reader.readAsText(event.target.files[0]);
 }
 
-// Initialize
+// === Simulated Server Sync ===
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
+
+async function syncWithServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const serverData = await response.json();
+
+    const serverQuotes = serverData.slice(0, 5).map(post => ({
+      text: post.title,
+      category: "Server"
+    }));
+
+    const localQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+    let hasConflict = false;
+    const newQuotes = [];
+
+    serverQuotes.forEach(serverQuote => {
+      const exists = localQuotes.some(local =>
+        local.text === serverQuote.text &&
+        local.category === serverQuote.category
+      );
+      if (!exists) {
+        newQuotes.push(serverQuote);
+        hasConflict = true;
+      }
+    });
+
+    if (newQuotes.length > 0) {
+      quotes.push(...newQuotes);
+      saveQuotes();
+      populateCategories();
+    }
+
+    if (hasConflict) {
+      showNotification("✅ Quotes synced from server. Conflicts resolved by prioritizing server data.");
+    }
+  } catch (err) {
+    console.error("Failed to sync with server:", err);
+    showNotification("⚠️ Failed to sync with server.");
+  }
+}
+
+function showNotification(message) {
+  let notice = document.getElementById("syncNotice");
+  if (!notice) {
+    notice = document.createElement("div");
+    notice.id = "syncNotice";
+    notice.style.background = "#ffffcc";
+    notice.style.border = "1px solid #aaa";
+    notice.style.padding = "10px";
+    notice.style.marginTop = "20px";
+    document.body.prepend(notice);
+  }
+  notice.textContent = message;
+}
+
+// Initialization
 loadQuotes();
 populateCategories();
 newQuoteButton.addEventListener("click", showRandomQuote);
 filterQuotes();
+syncWithServer();
+setInterval(syncWithServer, 60000);
 
 
