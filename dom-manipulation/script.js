@@ -165,6 +165,10 @@ async function pushQuoteToServer(quote) {
   }
 }
 
+function syncQuotes() {
+  fetchQuotesFromServer();
+}
+
 function notifyUser(message) {
   const div = document.createElement("div");
   div.textContent = message;
@@ -194,8 +198,8 @@ window.onload = () => {
     quoteDisplay.innerHTML = `\"${parsed.text}\" — <em>${parsed.category}</em>`;
   }
 
-  fetchQuotesFromServer();
-  setInterval(fetchQuotesFromServer, 15000);
+  syncQuotes();
+  setInterval(syncQuotes, 15000);
 };
 
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
