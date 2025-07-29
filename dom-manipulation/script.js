@@ -25,8 +25,39 @@ function showRandomQuote() {
   const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
   const quote = filteredQuotes[randomIndex];
 
-  // Use innerHTML instead of textContent
   quoteDisplay.innerHTML = `"${quote.text}" — <em>${quote.category}</em>`;
+}
+
+// Dynamically create the quote form
+function createAddQuoteForm() {
+  const formContainer = document.createElement("div");
+
+  const quoteInput = document.createElement("input");
+  quoteInput.setAttribute("id", "newQuoteText");
+  quoteInput.setAttribute("type", "text");
+  quoteInput.setAttribute("placeholder", "Enter a new quote");
+
+  const categoryInput = document.createElement("input");
+  categoryInput.setAttribute("id", "newQuoteCategory");
+  categoryInput.setAttribute("type", "text");
+  categoryInput.setAttribute("placeholder", "Enter quote category");
+
+  const addButton = document.createElement("button");
+  addButton.textContent = "Add Quote";
+  addButton.addEventListener("click", addQuote);
+
+  formContainer.appendChild(document.createElement("br"));
+  formContainer.appendChild(quoteInput);
+  formContainer.appendChild(document.createElement("br"));
+  formContainer.appendChild(categoryInput);
+  formContainer.appendChild(document.createElement("br"));
+  formContainer.appendChild(addButton);
+
+  document.body.appendChild(document.createElement("hr"));
+  const heading = document.createElement("h3");
+  heading.textContent = "Add a New Quote";
+  document.body.appendChild(heading);
+  document.body.appendChild(formContainer);
 }
 
 // Add a new quote
@@ -73,4 +104,6 @@ window.onload = () => {
     opt.textContent = cat;
     categorySelect.appendChild(opt);
   });
+
+  createAddQuoteForm(); // Call it on load!
 };
