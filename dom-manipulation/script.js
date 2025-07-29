@@ -143,7 +143,7 @@ function resolveConflicts(serverQuotes) {
   if (updated) {
     saveQuotes();
     populateCategories();
-    notifyUser("New quotes synced from server.");
+    notifyUser("Quotes synced with server!");
   }
 }
 
@@ -203,5 +203,6 @@ window.onload = () => {
 };
 
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+
 
 
