@@ -1,5 +1,5 @@
-// Quote data
-let quotes = [
+// Load quotes from localStorage or use defaults
+let quotes = JSON.parse(localStorage.getItem("quotes")) || [
   { text: "The journey of a thousand miles begins with one step.", category: "Motivation" },
   { text: "Imagination is more important than knowledge.", category: "Inspiration" },
   { text: "Success is not final, failure is not fatal.", category: "Success" },
@@ -7,6 +7,11 @@ let quotes = [
 
 const quoteDisplay = document.getElementById("quoteDisplay");
 const categorySelect = document.getElementById("categorySelect");
+
+// Save quotes to localStorage
+function saveQuotes() {
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+}
 
 // Show random quote based on selected category
 function showRandomQuote() {
@@ -26,6 +31,9 @@ function showRandomQuote() {
   const quote = filteredQuotes[randomIndex];
 
   quoteDisplay.innerHTML = `"${quote.text}" — <em>${quote.category}</em>`;
+
+  // Save last viewed quote to sessionStorage
+  sessionStorage.setItem("lastQuote", JSON.stringify(quote));
 }
 
 // Dynamically create the quote form
@@ -72,6 +80,7 @@ function addQuote() {
 
   const newQuote = { text, category };
   quotes.push(newQuote);
+  saveQuotes();
 
   // Add new category to dropdown if it doesn't exist
   const exists = Array.from(categorySelect.options).some(
@@ -92,10 +101,41 @@ function addQuote() {
   alert("Quote added successfully!");
 }
 
-// Event listener for "Show New Quote" button
-document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+// Export quotes as JSON file
+function exportQuotesToJson() {
+  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "quotes.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
-// Populate category dropdown on page load
+// Import quotes from JSON file
+function importFromJsonFile(event) {
+  const fileReader = new FileReader();
+  fileReader.onload = function (event) {
+    try {
+      const importedQuotes = JSON.parse(event.target.result);
+      if (Array.isArray(importedQuotes)) {
+        quotes.push(...importedQuotes);
+        saveQuotes();
+        alert("Quotes imported successfully!");
+        location.reload(); // Refresh to re-render categories
+      } else {
+        alert("Invalid file format.");
+      }
+    } catch {
+      alert("Failed to parse JSON file.");
+    }
+  };
+  fileReader.readAsText(event.target.files[0]);
+}
+
+// On load
 window.onload = () => {
   const categories = [...new Set(quotes.map((q) => q.category))];
   categories.forEach((cat) => {
@@ -105,5 +145,35 @@ window.onload = () => {
     categorySelect.appendChild(opt);
   });
 
-  createAddQuoteForm(); // Call it on load!
+  createAddQuoteForm();
+
+  // Show last viewed quote if stored
+  const lastQuote = sessionStorage.getItem("lastQuote");
+  if (lastQuote) {
+    const parsed = JSON.parse(lastQuote);
+    quoteDisplay.innerHTML = `"${parsed.text}" — <em>${parsed.category}</em>`;
+  }
+
+  // Add import/export controls
+  const fileInput = document.createElement("input");
+  fileInput.setAttribute("type", "file");
+  fileInput.setAttribute("id", "importFile");
+  fileInput.setAttribute("accept", ".json");
+  fileInput.addEventListener("change", importFromJsonFile);
+
+  const exportBtn = document.createElement("button");
+  exportBtn.textContent = "Export Quotes";
+  exportBtn.addEventListener("click", exportQuotesToJson);
+
+  document.body.appendChild(document.createElement("hr"));
+  const fileLabel = document.createElement("label");
+  fileLabel.textContent = "Import Quotes: ";
+  document.body.appendChild(fileLabel);
+  document.body.appendChild(fileInput);
+  document.body.appendChild(document.createElement("br"));
+  document.body.appendChild(exportBtn);
 };
+
+// Event listener
+document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+
