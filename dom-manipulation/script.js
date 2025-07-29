@@ -201,4 +201,3 @@ window.onload = () => {
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 
 
-
