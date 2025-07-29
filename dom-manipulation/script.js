@@ -119,7 +119,7 @@ function importFromJsonFile(event) {
   reader.readAsText(event.target.files[0]);
 }
 
-async function fetchServerQuotes() {
+async function fetchQuotesFromServer() {
   try {
     const response = await fetch(SERVER_URL);
     const serverData = await response.json();
@@ -194,10 +194,11 @@ window.onload = () => {
     quoteDisplay.innerHTML = `\"${parsed.text}\" — <em>${parsed.category}</em>`;
   }
 
-  fetchServerQuotes();
-  setInterval(fetchServerQuotes, 15000);
+  fetchQuotesFromServer();
+  setInterval(fetchQuotesFromServer, 15000);
 };
 
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+
 
 
