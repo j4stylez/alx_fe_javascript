@@ -1,3 +1,9 @@
+// =============================
+// Dynamic Quote Generator (script.js)
+// =============================
+
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
+
 let quotes = JSON.parse(localStorage.getItem("quotes")) || [
   { text: "The journey of a thousand miles begins with one step.", category: "Motivation" },
   { text: "Imagination is more important than knowledge.", category: "Inspiration" },
@@ -15,9 +21,7 @@ function saveQuotes() {
 function populateCategories() {
   const allCategories = [...new Set(quotes.map(q => q.category))];
   [categorySelect, categoryFilter].forEach(select => {
-    // Clear previous except "all"
     select.querySelectorAll("option:not([value='all'])").forEach(opt => opt.remove());
-
     allCategories.forEach(cat => {
       const opt = document.createElement("option");
       opt.value = cat;
@@ -41,7 +45,7 @@ function filterQuotes() {
   }
 
   const quoteList = filteredQuotes.map(q =>
-    `<p>"${q.text}" — <em>${q.category}</em></p>`
+    `<p>\"${q.text}\" — <em>${q.category}</em></p>`
   ).join("");
 
   quoteDisplay.innerHTML = quoteList;
@@ -61,7 +65,7 @@ function showRandomQuote() {
 
   const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
   const quote = filteredQuotes[randomIndex];
-  quoteDisplay.innerHTML = `"${quote.text}" — <em>${quote.category}</em>`;
+  quoteDisplay.innerHTML = `\"${quote.text}\" — <em>${quote.category}</em>`;
 
   sessionStorage.setItem("lastQuote", JSON.stringify(quote));
 }
@@ -75,9 +79,12 @@ function addQuote() {
     return;
   }
 
-  quotes.push({ text, category });
+  const newQuote = { text, category };
+  quotes.push(newQuote);
   saveQuotes();
   populateCategories();
+  pushQuoteToServer(newQuote);
+
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
   alert("Quote added successfully!");
@@ -104,12 +111,72 @@ function importFromJsonFile(event) {
       quotes.push(...importedQuotes);
       saveQuotes();
       populateCategories();
-      alert("Quotes imported successfully!");
+      notifyUser("Quotes imported successfully!");
     } catch {
       alert("Invalid JSON file.");
     }
   };
   reader.readAsText(event.target.files[0]);
+}
+
+async function fetchServerQuotes() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const serverData = await response.json();
+    const serverQuotes = serverData.map(item => ({ text: item.title, category: item.body }));
+    resolveConflicts(serverQuotes);
+  } catch (error) {
+    console.error("Failed to fetch from server:", error);
+  }
+}
+
+function resolveConflicts(serverQuotes) {
+  let updated = false;
+  serverQuotes.forEach(serverQuote => {
+    const exists = quotes.some(q => q.text === serverQuote.text && q.category === serverQuote.category);
+    if (!exists) {
+      quotes.push(serverQuote);
+      updated = true;
+    }
+  });
+
+  if (updated) {
+    saveQuotes();
+    populateCategories();
+    notifyUser("New quotes synced from server.");
+  }
+}
+
+async function pushQuoteToServer(quote) {
+  try {
+    await fetch(SERVER_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        title: quote.text,
+        body: quote.category,
+        userId: 1
+      }),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      }
+    });
+  } catch (err) {
+    console.error("Failed to push quote:", err);
+  }
+}
+
+function notifyUser(message) {
+  const div = document.createElement("div");
+  div.textContent = message;
+  div.style.position = "fixed";
+  div.style.bottom = "10px";
+  div.style.right = "10px";
+  div.style.padding = "10px";
+  div.style.background = "#28a745";
+  div.style.color = "white";
+  div.style.borderRadius = "5px";
+  document.body.appendChild(div);
+  setTimeout(() => document.body.removeChild(div), 4000);
 }
 
 window.onload = () => {
@@ -124,9 +191,13 @@ window.onload = () => {
   const lastQuote = sessionStorage.getItem("lastQuote");
   if (lastQuote) {
     const parsed = JSON.parse(lastQuote);
-    quoteDisplay.innerHTML = `"${parsed.text}" — <em>${parsed.category}</em>`;
+    quoteDisplay.innerHTML = `\"${parsed.text}\" — <em>${parsed.category}</em>`;
   }
+
+  fetchServerQuotes();
+  setInterval(fetchServerQuotes, 15000);
 };
 
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+
 
