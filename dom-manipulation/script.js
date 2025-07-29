@@ -18,12 +18,15 @@ function showRandomQuote() {
       : quotes.filter((q) => q.category.toLowerCase() === selectedCategory.toLowerCase());
 
   if (filteredQuotes.length === 0) {
-    quoteDisplay.textContent = "No quotes available in this category.";
+    quoteDisplay.innerHTML = "<strong>No quotes available in this category.</strong>";
     return;
   }
 
   const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
-  quoteDisplay.textContent = `"${filteredQuotes[randomIndex].text}" — ${filteredQuotes[randomIndex].category}`;
+  const quote = filteredQuotes[randomIndex];
+
+  // Use innerHTML instead of textContent
+  quoteDisplay.innerHTML = `"${quote.text}" — <em>${quote.category}</em>`;
 }
 
 // Add a new quote
